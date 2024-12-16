@@ -1,3 +1,5 @@
+
+
 // Daragh Kearney / IoT Smart Home System //
 // December 2024 //
 
@@ -9,14 +11,14 @@
 #include <ThingSpeak.h>
 
 // WiFi 
-const char* ssid = "Daragh's iPhone";
-const char* password = "bmhg5ak7";
+const char* ssid = "SKYHGSM1";
+const char* password = "yDtPgkUALtAR";
 
 // ThingSpeak 
 unsigned long channelID = 2713003;
-const char* writeAPIKey = "Yhttps://api.thingspeak.com/update?api_key=6CPF9H3D5KCSZGFT&field1=0";
+const char* writeAPIKey = "6CPF9H3D5KCSZGFT";
 
-#define PIR_PIN 2      // PIR sensor GPIO pin
+#define PIR_PIN 2     // PIR sensor GPIO pin
 #define LED_PIN 4      // LED GPIO pin
 
 // WiFi client
@@ -61,7 +63,7 @@ void loop() {
   // Send data from the motion sensor to my ThingSpeak
   sendToThingSpeak();
 
-  delay(20000); // Wait 20 seconds before next update
+  delay(2000); // Wait 2 seconds before next update
 }
 
 void connectToWiFi() {
