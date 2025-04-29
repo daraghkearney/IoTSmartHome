@@ -1,6 +1,5 @@
 // Daragh Kearney / IoT Smart Home System //
-// Added OLED display for displaying data //
-// Improved Comments and Comment structure //
+// Replaced delay() with millis() for non-blocking updates //
 
 #include <WiFi.h>
 #include <ThingSpeak.h>
@@ -9,11 +8,11 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
-// WiFi 
+// WiFi
 const char* ssid = "SKYHGSM1";
 const char* password = "yDtPgkUALtAR";
 
-// ThingSpeak 
+// ThingSpeak
 unsigned long channelID = 2713003;
 const char* writeAPIKey = "6CPF9H3D5KCSZGFT";
 // Field 1 = temperature, Field 2 = humidity, Field 5 = motion
@@ -23,7 +22,7 @@ const char* writeAPIKey = "6CPF9H3D5KCSZGFT";
 #define DHT_PIN 15
 #define DHT_TYPE DHT11
 
-// OLED settings
+// OLED config
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 #define OLED_RESET -1
@@ -36,6 +35,10 @@ bool motionDetected = false;
 float temperature = 0.0;
 float humidity = 0.0;
 
+// Timing
+unsigned long lastUpdateTime = 0;
+const unsigned long updateInterval = 16000;
+
 void setup() {
   Serial.begin(115200);
 
@@ -47,10 +50,9 @@ void setup() {
   connectToWiFi();
   ThingSpeak.begin(client);
 
-  // Initialize OLED display
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
     Serial.println("OLED not found");
-    while (true); // Stop if OLED fails
+    while (true);
   }
 
   display.clearDisplay();
@@ -65,34 +67,35 @@ void setup() {
 }
 
 void loop() {
+  // Read motion sensor
   motionDetected = digitalRead(PIR_PIN);
+
+  // LED logic
   if (motionDetected) {
-    Serial.println("Motion detected!");
     digitalWrite(LED_PIN, HIGH);
+    Serial.println("Motion detected!");
   } else {
-    Serial.println("No motion detected.");
     digitalWrite(LED_PIN, LOW);
+    Serial.println("No motion detected.");
   }
 
-  temperature = dht.readTemperature();
-  humidity = dht.readHumidity();
+  // Non-blocking ThingSpeak + OLED update
+  unsigned long currentTime = millis();
+  if (currentTime - lastUpdateTime >= updateInterval) {
+    temperature = dht.readTemperature();
+    humidity = dht.readHumidity();
 
-  if (isnan(temperature) || isnan(humidity)) {
-    Serial.println("Failed to read from DHT11 sensor");
-  } else {
-    Serial.print("Temperature: ");
-    Serial.print(temperature);
-    Serial.println(" °C");
+    if (!isnan(temperature) && !isnan(humidity)) {
+      updateOLED();
+      sendToThingSpeak();
+    } else {
+      Serial.println("Failed to read from DHT11 sensor");
+    }
 
-    Serial.print("Humidity: ");
-    Serial.print(humidity);
-    Serial.println(" %");
-
-    updateOLED();
-    sendToThingSpeak();
+    lastUpdateTime = currentTime;
   }
 
-  delay(2000);
+  delay(50);  // Short delay to prevent busy loop
 }
 
 void connectToWiFi() {
