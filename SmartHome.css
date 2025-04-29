@@ -1,4 +1,10 @@
 /* Daragh Kearney / SmartHome CSS */
+
+/* Add smooth scroll to page */
+html {
+    scroll-behavior: smooth;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -7,8 +13,9 @@
 
 body {
     font-family: 'Arial', sans-serif;
-    background: linear-gradient(to bottom, #f4f4f4, #e0e0e0);
+    background: linear-gradient(135deg, #e0f7fa, #f1f8e9);
     color: #333;
+    transition: background 0.5s ease;
 }
 
 /* Navigation Bar */
@@ -91,7 +98,6 @@ iframe {
     margin-top: 2rem;
 }
 
-/* Footer */
 footer {
     text-align: center;
     padding: 1rem;
