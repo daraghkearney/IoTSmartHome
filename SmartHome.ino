@@ -1,9 +1,13 @@
 // Daragh Kearney / IoT Smart Home System //
-// temperature and humidity to ThingSpeak graphs //
+// Added OLED display for displaying data //
+// Improved Comments and Comment structure //
 
 #include <WiFi.h>
 #include <ThingSpeak.h>
 #include <DHT.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
 
 // WiFi 
 const char* ssid = "SKYHGSM1";
@@ -12,18 +16,24 @@ const char* password = "yDtPgkUALtAR";
 // ThingSpeak 
 unsigned long channelID = 2713003;
 const char* writeAPIKey = "6CPF9H3D5KCSZGFT";
-// field 1 = temperature, field 2 = humidity, field 5 = motion
+// Field 1 = temperature, Field 2 = humidity, Field 5 = motion
 
 #define PIR_PIN 2
 #define LED_PIN 4
 #define DHT_PIN 15
-#define DHT_TYPE DHT11 // Sensor type
+#define DHT_TYPE DHT11
+
+// OLED settings
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define OLED_RESET -1
 
 WiFiClient client;
 DHT dht(DHT_PIN, DHT_TYPE);
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-bool motionDetected = false; //Motion state
-float temperature = 0.0; //starting values
+bool motionDetected = false;
+float temperature = 0.0;
 float humidity = 0.0;
 
 void setup() {
@@ -36,6 +46,20 @@ void setup() {
   dht.begin();
   connectToWiFi();
   ThingSpeak.begin(client);
+
+  // Initialize OLED display
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    Serial.println("OLED not found");
+    while (true); // Stop if OLED fails
+  }
+
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+  display.setCursor(20, 25);
+  display.println("System Starting...");
+  display.display();
+  delay(2000);
 
   Serial.println("Setup complete.");
 }
@@ -64,7 +88,8 @@ void loop() {
     Serial.print(humidity);
     Serial.println(" %");
 
-    sendToThingSpeak(); 
+    updateOLED();
+    sendToThingSpeak();
   }
 
   delay(2000);
@@ -94,4 +119,33 @@ void sendToThingSpeak() {
   } else {
     Serial.printf("ThingSpeak error: %d\n", status);
   }
+}
+
+void updateOLED() {
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+
+  display.setCursor(0, 0);
+  display.println("Smart Home Status");
+
+  display.setCursor(0, 16);
+  display.print("Temp: ");
+  display.print(temperature);
+  display.println(" C");
+
+  display.setCursor(0, 28);
+  display.print("Humidity: ");
+  display.print(humidity);
+  display.println(" %");
+
+  display.setCursor(0, 40);
+  display.print("Motion: ");
+  display.println(motionDetected ? "Yes" : "No");
+
+  display.setCursor(0, 52);
+  display.print("Light: ");
+  display.println(motionDetected ? "ON" : "OFF");
+
+  display.display();
 }
