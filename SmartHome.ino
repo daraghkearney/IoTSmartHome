@@ -1,5 +1,5 @@
 // Daragh Kearney / IoT Smart Home System //
-// Added DHT11 temperature and humidity sensor instead of using BME280 //
+// temperature and humidity to ThingSpeak graphs //
 
 #include <WiFi.h>
 #include <ThingSpeak.h>
@@ -12,32 +12,28 @@ const char* password = "yDtPgkUALtAR";
 // ThingSpeak 
 unsigned long channelID = 2713003;
 const char* writeAPIKey = "6CPF9H3D5KCSZGFT";
-// Field 5 ThingSpeak is motion status (1 = motion, 0 = no motion)
+// field 1 = temperature, field 2 = humidity, field 5 = motion
 
-#define PIR_PIN 2     
-#define LED_PIN 4     
-
-#define DHT_PIN 15     
+#define PIR_PIN 2
+#define LED_PIN 4
+#define DHT_PIN 15
 #define DHT_TYPE DHT11 // Sensor type
 
-// WiFi client
 WiFiClient client;
-
-// Motion state
-bool motionDetected = false;
-
-// DHT sensor object
 DHT dht(DHT_PIN, DHT_TYPE);
+
+bool motionDetected = false; //Motion state
+float temperature = 0.0; //starting values
+float humidity = 0.0;
 
 void setup() {
   Serial.begin(115200);
 
   pinMode(PIR_PIN, INPUT);
   pinMode(LED_PIN, OUTPUT);
-  digitalWrite(LED_PIN, LOW); // LED off at first
+  digitalWrite(LED_PIN, LOW);
 
-  dht.begin();  // Start the DHT11 sensor
-
+  dht.begin();
   connectToWiFi();
   ThingSpeak.begin(client);
 
@@ -45,10 +41,7 @@ void setup() {
 }
 
 void loop() {
-  // Read motion sensor
   motionDetected = digitalRead(PIR_PIN);
-
-  // LED turns on if motion is detected
   if (motionDetected) {
     Serial.println("Motion detected!");
     digitalWrite(LED_PIN, HIGH);
@@ -57,9 +50,8 @@ void loop() {
     digitalWrite(LED_PIN, LOW);
   }
 
-  // Read DHT11 values
-  float temperature = dht.readTemperature();
-  float humidity = dht.readHumidity();
+  temperature = dht.readTemperature();
+  humidity = dht.readHumidity();
 
   if (isnan(temperature) || isnan(humidity)) {
     Serial.println("Failed to read from DHT11 sensor");
@@ -71,12 +63,11 @@ void loop() {
     Serial.print("Humidity: ");
     Serial.print(humidity);
     Serial.println(" %");
+
+    sendToThingSpeak(); 
   }
 
-  // Send motion to my thingspeak graph (field 5)
-  sendToThingSpeak();
-
-  delay(2000); // Wait 2 seconds before next reading
+  delay(2000);
 }
 
 void connectToWiFi() {
@@ -93,10 +84,14 @@ void connectToWiFi() {
 }
 
 void sendToThingSpeak() {
-  int status = ThingSpeak.writeField(channelID, 5, motionDetected ? 1 : 0, writeAPIKey);
+  ThingSpeak.setField(1, temperature);
+  ThingSpeak.setField(2, humidity);
+  ThingSpeak.setField(5, motionDetected ? 1 : 0);
+
+  int status = ThingSpeak.writeFields(channelID, writeAPIKey);
   if (status == 200) {
-    Serial.println("Motion status sent to ThingSpeak");
+    Serial.println("Data sent to ThingSpeak");
   } else {
-    Serial.printf("Failed to send data to ThingSpeak. HTTP Error: %d\n", status);
+    Serial.printf("ThingSpeak error: %d\n", status);
   }
 }
