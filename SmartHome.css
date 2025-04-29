@@ -106,11 +106,12 @@ iframe {
     color: white;
     border-radius: 5px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .control-buttons button:hover {
     background-color: #0056b3;
+    transform: scale(1.05);
 }
 
 /* About My Project */
@@ -120,6 +121,7 @@ iframe {
     margin-top: 2rem;
 }
 
+/* Footer */
 footer {
     text-align: center;
     padding: 1rem;
