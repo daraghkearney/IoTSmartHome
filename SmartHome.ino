@@ -1,5 +1,5 @@
 // Daragh Kearney / IoT Smart Home System //
-// Replaced delay() with millis() for non-blocking updates //
+// April 2024 Update
 
 #include <WiFi.h>
 #include <ThingSpeak.h>
@@ -15,27 +15,27 @@ const char* password = "yDtPgkUALtAR";
 // ThingSpeak
 unsigned long channelID = 2713003;
 const char* writeAPIKey = "6CPF9H3D5KCSZGFT";
-// Field 1 = temperature, Field 2 = humidity, Field 5 = motion
 
+// Pins
 #define PIR_PIN 2
 #define LED_PIN 4
 #define DHT_PIN 15
 #define DHT_TYPE DHT11
-
-// OLED config
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 #define OLED_RESET -1
 
-WiFiClient client;
+// Sensor/Display Objects
 DHT dht(DHT_PIN, DHT_TYPE);
+WiFiClient client;
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
+// Motion + Sensor Data
 bool motionDetected = false;
 float temperature = 0.0;
 float humidity = 0.0;
 
-// Timing
+// Timer for periodic updates
 unsigned long lastUpdateTime = 0;
 const unsigned long updateInterval = 16000;
 
@@ -47,66 +47,51 @@ void setup() {
   digitalWrite(LED_PIN, LOW);
 
   dht.begin();
-  connectToWiFi();
-  ThingSpeak.begin(client);
 
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
     Serial.println("OLED not found");
     while (true);
   }
 
-  display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(WHITE);
-  display.setCursor(20, 25);
-  display.println("System Starting...");
-  display.display();
-  delay(2000);
+  displayStartupMessage();
+  connectToWiFi();
+  ThingSpeak.begin(client);
 
   Serial.println("Setup complete.");
 }
 
 void loop() {
-  // Read motion sensor
   motionDetected = digitalRead(PIR_PIN);
 
-  // LED logic
   if (motionDetected) {
-    digitalWrite(LED_PIN, HIGH);
     Serial.println("Motion detected!");
+    digitalWrite(LED_PIN, HIGH);
   } else {
-    digitalWrite(LED_PIN, LOW);
     Serial.println("No motion detected.");
+    digitalWrite(LED_PIN, LOW);
   }
 
-  // Non-blocking ThingSpeak + OLED update
   unsigned long currentTime = millis();
   if (currentTime - lastUpdateTime >= updateInterval) {
     temperature = dht.readTemperature();
     humidity = dht.readHumidity();
 
-    if (!isnan(temperature) && !isnan(humidity)) {
-      updateOLED();
-      sendToThingSpeak();
-    } else {
-      Serial.println("Failed to read from DHT11 sensor");
-    }
+    updateOLED();
+    sendToThingSpeak();
 
     lastUpdateTime = currentTime;
   }
 
-  delay(50);  // Short delay to prevent busy loop
+  delay(50); // Small delay to reduce CPU load
 }
 
 void connectToWiFi() {
   Serial.print("Connecting to WiFi");
   WiFi.begin(ssid, password);
-
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
     Serial.print(".");
   }
-
   Serial.println("\nWiFi connected");
   Serial.println("IP Address: " + WiFi.localIP().toString());
 }
@@ -128,7 +113,6 @@ void updateOLED() {
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(WHITE);
-
   display.setCursor(0, 0);
   display.println("Smart Home Status");
 
@@ -151,4 +135,14 @@ void updateOLED() {
   display.println(motionDetected ? "ON" : "OFF");
 
   display.display();
+}
+
+void displayStartupMessage() {
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+  display.setCursor(20, 25);
+  display.println("System Starting...");
+  display.display();
+  delay(2000);
 }
