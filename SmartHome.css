@@ -55,11 +55,22 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Home Page */
+/* Home Page with background image and text shadow */
 #home {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 4rem 2rem;
+    background: linear-gradient(rgba(255,255,255,0.85), rgba(255,255,255,0.85)),
+                url('smarthome.jpg') center/cover no-repeat;
+    background-attachment: fixed;
+}
+
+#home h1,
+#home p {
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 /* ThingSpeak Graphs */
@@ -95,6 +106,7 @@ iframe {
     color: white;
     border-radius: 5px;
     cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
 .control-buttons button:hover {
@@ -108,7 +120,6 @@ iframe {
     margin-top: 2rem;
 }
 
-/* Footer */
 footer {
     text-align: center;
     padding: 1rem;
