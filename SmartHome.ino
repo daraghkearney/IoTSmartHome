@@ -1,14 +1,15 @@
 // Daragh Kearney / IoT Smart Home System //
-// April 2024 Update
+// webserver testing //
 
 #include <WiFi.h>
 #include <ThingSpeak.h>
+#include <WebServer.h>
 #include <DHT.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
-// WiFi
+// WiFi 
 const char* ssid = "SKYHGSM1";
 const char* password = "yDtPgkUALtAR";
 
@@ -25,17 +26,16 @@ const char* writeAPIKey = "6CPF9H3D5KCSZGFT";
 #define SCREEN_HEIGHT 64
 #define OLED_RESET -1
 
-// Sensor/Display Objects
-DHT dht(DHT_PIN, DHT_TYPE);
 WiFiClient client;
+WebServer server(80); // Added web server
+
+DHT dht(DHT_PIN, DHT_TYPE);
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-// Motion + Sensor Data
+// Data
 bool motionDetected = false;
 float temperature = 0.0;
 float humidity = 0.0;
-
-// Timer for periodic updates
 unsigned long lastUpdateTime = 0;
 const unsigned long updateInterval = 16000;
 
@@ -47,6 +47,8 @@ void setup() {
   digitalWrite(LED_PIN, LOW);
 
   dht.begin();
+  connectToWiFi();
+  ThingSpeak.begin(client);
 
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
     Serial.println("OLED not found");
@@ -54,35 +56,35 @@ void setup() {
   }
 
   displayStartupMessage();
-  connectToWiFi();
-  ThingSpeak.begin(client);
 
-  Serial.println("Setup complete.");
+  // webpage route testing
+  server.on("/", HTTP_GET, []() {
+    server.send(200, "text/html", "<h1>ESP32 Web Server Running</h1>");
+  });
+
+  server.begin();
+  Serial.println("Web server started");
 }
 
 void loop() {
   motionDetected = digitalRead(PIR_PIN);
-
-  if (motionDetected) {
-    Serial.println("Motion detected!");
-    digitalWrite(LED_PIN, HIGH);
-  } else {
-    Serial.println("No motion detected.");
-    digitalWrite(LED_PIN, LOW);
-  }
+  digitalWrite(LED_PIN, motionDetected ? HIGH : LOW);
 
   unsigned long currentTime = millis();
   if (currentTime - lastUpdateTime >= updateInterval) {
     temperature = dht.readTemperature();
     humidity = dht.readHumidity();
 
-    updateOLED();
-    sendToThingSpeak();
+    if (!isnan(temperature) && !isnan(humidity)) {
+      updateOLED();
+      sendToThingSpeak();
+    }
 
     lastUpdateTime = currentTime;
   }
 
-  delay(50); // Small delay to reduce CPU load
+  server.handleClient(); // Required for HTTP server
+  delay(50);
 }
 
 void connectToWiFi() {
@@ -93,7 +95,7 @@ void connectToWiFi() {
     Serial.print(".");
   }
   Serial.println("\nWiFi connected");
-  Serial.println("IP Address: " + WiFi.localIP().toString());
+  Serial.println("ESP32 IP: " + WiFi.localIP().toString());
 }
 
 void sendToThingSpeak() {
@@ -132,7 +134,7 @@ void updateOLED() {
 
   display.setCursor(0, 52);
   display.print("Light: ");
-  display.println(motionDetected ? "ON" : "OFF");
+  display.println(digitalRead(LED_PIN) ? "ON" : "OFF");
 
   display.display();
 }
