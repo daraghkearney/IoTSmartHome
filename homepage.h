@@ -140,8 +140,8 @@ const char homepageHTML[] PROGMEM = R"rawliteral(
     <h2>Control Center</h2>
     <p>Use the buttons below to control your smart home devices.</p>
     <div class="control-buttons">
-      <button onclick="alert('Lights Turned ON')">Turn Lights ON</button>
-      <button onclick="alert('Lights Turned OFF')">Turn Lights OFF</button>
+      <button onclick="controlLED('on')">Turn Lights ON</button>
+      <button onclick="controlLED('off')">Turn Lights OFF</button>
     </div>
   </section>
 
@@ -171,6 +171,13 @@ const char homepageHTML[] PROGMEM = R"rawliteral(
     window.onload = function() {
       showSection('home');
     };
+
+    function controlLED(state) {
+      fetch(`/led?state=${state}`)
+        .then(res => res.text())
+        .then(data => console.log("LED:", data))
+        .catch(err => console.error("Fetch error:", err));
+    }
   </script>
 </body>
 </html>
