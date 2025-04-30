@@ -33,6 +33,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 bool motionDetected = false;
 float temperature = 0.0;
 float humidity = 0.0;
+bool manualLEDOverride = false;
 unsigned long lastUpdateTime = 0;
 const unsigned long updateInterval = 16000;
 
@@ -52,20 +53,22 @@ void setup() {
   connectToWiFi();
   ThingSpeak.begin(client);
 
-  // Serve SmartHome HTML page
+  // HTML
   server.on("/", HTTP_GET, []() {
     server.send_P(200, "text/html", homepageHTML);
   });
 
-  // LED control via Fetch API
+  // LED control with Fetch API
   server.on("/led", HTTP_GET, []() {
     String state = server.arg("state");
     if (state == "on") {
+      manualLEDOverride = true;
       digitalWrite(LED_PIN, HIGH);
-      Serial.println("LED turned ON via fetch()");
+      Serial.println("LED forced ON by fetch()");
     } else if (state == "off") {
+      manualLEDOverride = false;
       digitalWrite(LED_PIN, LOW);
-      Serial.println("LED turned OFF via fetch()");
+      Serial.println("LED forced OFF by fetch()");
     }
     server.send(200, "text/plain", "LED state changed");
   });
@@ -76,7 +79,10 @@ void setup() {
 
 void loop() {
   motionDetected = digitalRead(PIR_PIN);
-  digitalWrite(LED_PIN, motionDetected ? HIGH : LOW);
+
+  if (!manualLEDOverride) {
+    digitalWrite(LED_PIN, motionDetected ? HIGH : LOW);
+  }
 
   unsigned long currentTime = millis();
   if (currentTime - lastUpdateTime >= updateInterval) {
