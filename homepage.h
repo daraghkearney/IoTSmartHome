@@ -155,6 +155,12 @@ const char homepageHTML[] PROGMEM = R"rawliteral(
               allowfullscreen>
       </iframe>
     </div>
+    <p style="margin-top: 1.5rem; max-width: 700px; margin-left: auto; margin-right: auto;">
+    This IoT Smart Home is designed to automate and monitor various parts of the home environment, increasing energy efficiency and comfort.
+    It can control household equipment, such as lighting, as well as monitor the surroundings in real-time.
+    The controller uses a plethora of sensors to enhance day-to-day living, all through an easy-to-use interface.
+    This SmartHome system can be controlled remotely over Wi-Fi (through the Control Center on this webpage) allowing users to control their home with a few clicks.
+  </p>
   </section>
 
   <footer>
