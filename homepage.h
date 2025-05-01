@@ -57,7 +57,7 @@ const char homepageHTML[] PROGMEM = R"rawliteral(
       min-height: 100vh;
       padding: 4rem 2rem;
       background: linear-gradient(rgba(255,255,255,0.85), rgba(255,255,255,0.85)),
-                  url('smarthome.jpg') center/cover no-repeat;
+                  url('https://i.imgur.com/fTGcw7p.jpeg') center/cover no-repeat;
       background-attachment: fixed;
     }
     #home h1,
