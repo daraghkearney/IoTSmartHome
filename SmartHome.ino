@@ -19,6 +19,7 @@ const char* writeAPIKey = "6CPF9H3D5KCSZGFT";
 #define PIR_PIN 2
 #define LED_PIN 4
 #define DHT_PIN 15
+#define RELAY3_PIN 26
 #define DHT_TYPE DHT11
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
@@ -36,12 +37,15 @@ float humidity = 0.0;
 bool manualLEDOverride = false;
 unsigned long lastUpdateTime = 0;
 const unsigned long updateInterval = 16000;
+const float tempThreshold = 25.0;  // Temperature trigger for relay
 
 void setup() {
   Serial.begin(115200);
   pinMode(PIR_PIN, INPUT);
   pinMode(LED_PIN, OUTPUT);
+  pinMode(RELAY3_PIN, OUTPUT);
   digitalWrite(LED_PIN, LOW);
+  digitalWrite(RELAY3_PIN, LOW);
   dht.begin();
 
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
@@ -53,12 +57,10 @@ void setup() {
   connectToWiFi();
   ThingSpeak.begin(client);
 
-  // HTML
   server.on("/", HTTP_GET, []() {
     server.send_P(200, "text/html", homepageHTML);
   });
 
-  // LED control with Fetch API
   server.on("/led", HTTP_GET, []() {
     String state = server.arg("state");
     if (state == "on") {
@@ -92,6 +94,15 @@ void loop() {
     if (!isnan(temperature) && !isnan(humidity)) {
       updateOLED();
       sendToThingSpeak();
+
+      // Relay based on temperature
+      if (temperature > tempThreshold) {
+        digitalWrite(RELAY3_PIN, HIGH); // Turn on relay
+        Serial.println("Relay ON: High temperature");
+      } else {
+        digitalWrite(RELAY3_PIN, LOW);  // Turn off relay
+        Serial.println("Relay OFF: Temp below threshold");
+      }
     }
 
     lastUpdateTime = currentTime;
