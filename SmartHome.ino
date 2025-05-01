@@ -59,10 +59,12 @@ void setup() {
   connectToWiFi();
   ThingSpeak.begin(client);
 
+  // webpage
   server.on("/", HTTP_GET, []() {
     server.send_P(200, "text/html", homepageHTML);
   });
 
+  // Fetch API for LED
   server.on("/led", HTTP_GET, []() {
     String state = server.arg("state");
     if (state == "on") {
@@ -77,6 +79,9 @@ void setup() {
     digitalWrite(LED_PIN, ledOn ? HIGH : LOW);
     server.send(200, "text/plain", "LED state changed");
   });
+
+  // 404 Handler
+  server.onNotFound(handleNotFound);
 
   server.begin();
   Serial.println("Web server started");
@@ -107,10 +112,8 @@ void loop() {
   }
 
   if (manualLEDOverride) {
-    // Keep LED as per manual state
     digitalWrite(LED_PIN, ledOn ? HIGH : LOW);
   } else {
-    // LED follows logic: on if motion or high temp
     ledOn = motionDetected || (temperature > tempThreshold);
     digitalWrite(LED_PIN, ledOn ? HIGH : LOW);
   }
@@ -164,4 +167,19 @@ void displayStartupMessage() {
   display.println("System Starting...");
   display.display();
   delay(2000);
+}
+
+void handleNotFound() {
+  String message = "File Not Found\n\n";
+  message += "URI: ";
+  message += server.uri();
+  message += "\nMethod: ";
+  message += (server.method() == HTTP_GET) ? "GET" : "POST";
+  message += "\nArguments: ";
+  message += server.args();
+  message += "\n";
+  for (uint8_t i = 0; i < server.args(); i++) {
+    message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
+  }
+  server.send(404, "text/plain", message);
 }
