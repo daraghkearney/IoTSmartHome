@@ -6,14 +6,15 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include "homepage.h"
+#include "secrets.h"
 
 // WiFi
-const char* ssid = "SKYHGSM1";
-const char* password = "yDtPgkUALtAR";
+const char* ssid = SECRET_SSID;
+const char* password = SECRET_PASS;
 
 // ThingSpeak
-unsigned long channelID = 2713003;
-const char* writeAPIKey = "6CPF9H3D5KCSZGFT";
+unsigned long channelID = SECRET_CH_ID;
+const char* writeAPIKey = SECRET_WRITE_APIKEY;
 
 // Pins
 #define PIR_PIN 2
@@ -35,9 +36,10 @@ bool motionDetected = false;
 float temperature = 0.0;
 float humidity = 0.0;
 bool manualLEDOverride = false;
+bool ledOn = false;
 unsigned long lastUpdateTime = 0;
 const unsigned long updateInterval = 16000;
-const float tempThreshold = 25.0;  // Temperature trigger for relay
+const float tempThreshold = 25.0;
 
 void setup() {
   Serial.begin(115200);
@@ -65,13 +67,14 @@ void setup() {
     String state = server.arg("state");
     if (state == "on") {
       manualLEDOverride = true;
-      digitalWrite(LED_PIN, HIGH);
+      ledOn = true;
       Serial.println("LED forced ON by fetch()");
     } else if (state == "off") {
       manualLEDOverride = false;
-      digitalWrite(LED_PIN, LOW);
+      ledOn = false;
       Serial.println("LED forced OFF by fetch()");
     }
+    digitalWrite(LED_PIN, ledOn ? HIGH : LOW);
     server.send(200, "text/plain", "LED state changed");
   });
 
@@ -82,10 +85,6 @@ void setup() {
 void loop() {
   motionDetected = digitalRead(PIR_PIN);
 
-  if (!manualLEDOverride) {
-    digitalWrite(LED_PIN, motionDetected ? HIGH : LOW);
-  }
-
   unsigned long currentTime = millis();
   if (currentTime - lastUpdateTime >= updateInterval) {
     temperature = dht.readTemperature();
@@ -95,28 +94,25 @@ void loop() {
       updateOLED();
       sendToThingSpeak();
 
-      // Relay based on temperature
       if (temperature > tempThreshold) {
-  digitalWrite(RELAY3_PIN, HIGH);
-  Serial.println("Relay ON: High temperature");
-
-  if (!manualLEDOverride) {
-    digitalWrite(LED_PIN, HIGH);
-    Serial.println("LED ON: due to relay on");
-  }
-} else {
-  digitalWrite(RELAY3_PIN, LOW);
-  Serial.println("Relay OFF: Temp below threshold");
-
-  if (!manualLEDOverride) {
-    digitalWrite(LED_PIN, LOW);
-    Serial.println("LED OFF: due to relay off");
-  }
-}
-
+        digitalWrite(RELAY3_PIN, HIGH);
+        Serial.println("Relay ON: High temperature");
+      } else {
+        digitalWrite(RELAY3_PIN, LOW);
+        Serial.println("Relay OFF: Temp below threshold");
+      }
     }
 
     lastUpdateTime = currentTime;
+  }
+
+  if (manualLEDOverride) {
+    // Keep LED as per manual state
+    digitalWrite(LED_PIN, ledOn ? HIGH : LOW);
+  } else {
+    // LED follows logic: on if motion or high temp
+    ledOn = motionDetected || (temperature > tempThreshold);
+    digitalWrite(LED_PIN, ledOn ? HIGH : LOW);
   }
 
   server.handleClient();
@@ -156,7 +152,7 @@ void updateOLED() {
   display.setCursor(0, 40);
   display.print("Motion: "); display.println(motionDetected ? "Yes" : "No");
   display.setCursor(0, 52);
-  display.print("Light: "); display.println(digitalRead(LED_PIN) ? "ON" : "OFF");
+  display.print("Light: "); display.println(ledOn ? "ON" : "OFF");
   display.display();
 }
 
