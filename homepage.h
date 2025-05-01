@@ -125,7 +125,7 @@ const char homepageHTML[] PROGMEM = R"rawliteral(
   <section id="home" class="container">
     <h1>Welcome to the IoT Smart Home Dashboard!</h1>
     <p>Monitor and control your smart home with ease.</p>
-    <p style="margin-top: 2rem; max-width: 700px; text-align: center;">
+    <p style="margin: 2rem auto 0 auto; max-width: 700px; text-align: center;">
     Did you know that more than 60% of total household energy consumption is broken down into heating, cooling, and electricity?
     As homes become increasingly concerned with saving energy, the need for an automated energy manager is greater than ever.
     <strong>Look no further than my IoT SmartHome system!</strong>
