@@ -97,12 +97,23 @@ void loop() {
 
       // Relay based on temperature
       if (temperature > tempThreshold) {
-        digitalWrite(RELAY3_PIN, HIGH); // Turn on relay
-        Serial.println("Relay ON: High temperature");
-      } else {
-        digitalWrite(RELAY3_PIN, LOW);  // Turn off relay
-        Serial.println("Relay OFF: Temp below threshold");
-      }
+  digitalWrite(RELAY3_PIN, HIGH);
+  Serial.println("Relay ON: High temperature");
+
+  if (!manualLEDOverride) {
+    digitalWrite(LED_PIN, HIGH);
+    Serial.println("LED ON: due to relay on");
+  }
+} else {
+  digitalWrite(RELAY3_PIN, LOW);
+  Serial.println("Relay OFF: Temp below threshold");
+
+  if (!manualLEDOverride) {
+    digitalWrite(LED_PIN, LOW);
+    Serial.println("LED OFF: due to relay off");
+  }
+}
+
     }
 
     lastUpdateTime = currentTime;
