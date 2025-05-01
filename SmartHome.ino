@@ -1,3 +1,6 @@
+// Daragh Kearney 2025 //
+// Iot SmartHome //
+
 #include <WiFi.h>
 #include <ThingSpeak.h>
 #include <WebServer.h>
