@@ -154,7 +154,7 @@ const char homepageHTML[] PROGMEM = R"rawliteral(
     <h2>About My Project</h2>
     <p>Watch the video below to learn more about my IoT Smart Home system.</p>
     <div class="video-container">
-      <iframe width="560" height="315" src="https://www.youtube.com/watch?v=zgY56vgKHGU" 
+      <iframe width="560" height="315" src="https://www.youtube.com/embed/PkZJJacFd2c" 
               title="My project video" frameborder="0" 
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
               allowfullscreen>
